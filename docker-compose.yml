@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "83:80" # Changed from 8080:80
+    volumes:
+      - ./public:/var/www/html/
+      - ./src:/var/www/html/src/
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_DATABASE: phone_extensions
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_PORT: 3306 # Default MySQL port
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: phone_extensions
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/mysql # Existing volume for persistence
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # Added mount for init script
+    ports: # Exposing DB port for external access if needed
+      - "3609:3306"
+    restart: unless-stopped
+    # For debugging or direct access from host, you could expose the port:
+    # ports:
+    #   - "33061:3306"
+
+volumes:
+  db_data: # Defines the named volume for MySQL data
