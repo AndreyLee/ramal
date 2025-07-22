@@ -1,55 +1,20 @@
-# Use an official PHP image with Apache
-FROM php:8.2-apache
+# Use an official Python runtime as a parent image
+FROM python:3.8-slim
 
-# Set the working directory
-WORKDIR /var/www/html
+# Set the working directory in the container
+WORKDIR /usr/src/app
 
-# Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    git \
-    libzip-dev \
-    libicu-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    pkg-config \
-    zlib1g-dev \
-    && docker-php-ext-configure zip \
-    && docker-php-ext-install -j$(nproc) \
-        pdo \
-        pdo_mysql \
-        mysqli \
-        mbstring \
-        xml \
-        intl \
-        zip
+# Copy the requirements file into the container at /usr/src/app
+COPY requirements.txt ./
 
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
+# Copy the rest of the application
+COPY ./app .
 
-# Copy the public directory contents to the web server's document root
-# This will make public/index.php available at /index.php
-COPY public/ /var/www/html/
+# Make port 5000 available to the world outside this container
+EXPOSE 5000
 
-# Copy the src directory into a subdirectory within the document root (or another location)
-# This keeps backend code separate from the immediate web root but accessible.
-COPY src/ /var/www/html/src/
-
-# Note: If src/ was meant to be outside /var/www/html for security,
-# then include paths in PHP scripts would need to be adjusted,
-# and potentially Apache config to alias or allow includes from that path.
-# For simplicity, placing it inside /var/www/html/src makes it directly accessible
-# for includes like `require_once __DIR__ . '/src/includes/file.php';` from `/var/www/html/index.php`
-
-# Ensure the web server has write permissions to necessary directories if needed
-# For example, if there were an 'uploads' directory:
-# RUN mkdir -p /var/www/html/uploads && chown www-data:www-data /var/www/html/uploads
-# For now, default permissions should be okay for session storage (usually /tmp or managed by PHP).
-
-# Expose port 80
-EXPOSE 80
-
-# The default Apache CMD in the base image will start Apache.
-# CMD ["apache2-foreground"]
+# Run app.py when the container launches
+CMD ["python", "app.py"]

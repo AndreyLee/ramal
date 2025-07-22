@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Assinatura de Email</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Gerador de Assinatura de Email</h1>
+        <form id="signature-form">
+            <label for="nome">Nome Completo:</label>
+            <input type="text" id="nome" name="nome" required>
+            <label for="setor">Setor:</label>
+            <input type="text" id="setor" name="setor" required>
+            <label for="ramal">Ramal:</label>
+            <input type="text" id="ramal" name="ramal" required>
+            <button type="submit">Gerar Assinatura</button>
+        </form>
+        <div class="preview-container">
+            <h2>Pré-visualização da Assinatura</h2>
+            <img id="preview-img" src="" alt="Aguardando geração da assinatura...">
+            <button id="copy-button" style="display:none;">Copiar para Área de Transferência</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('signature-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch('/generate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                document.getElementById('preview-img').src = url;
+                document.getElementById('copy-button').style.display = 'block';
+            });
+        });
+
+        document.getElementById('copy-button').addEventListener('click', function() {
+            const img = document.getElementById('preview-img');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(function(blob) {
+                const item = new ClipboardItem({ 'image/png': blob });
+                navigator.clipboard.write([item]);
+                alert('Assinatura copiada para a área de transferência!');
+            }, 'image/png');
+        });
+    </script>
+</body>
+</html>
